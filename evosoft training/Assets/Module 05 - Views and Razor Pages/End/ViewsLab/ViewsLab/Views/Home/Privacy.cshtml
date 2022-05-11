@@ -1,0 +1,52 @@
+﻿@using ViewsLab.Models
+@model Movie
+
+@{
+    ViewData["Title"] = "Privacy Policy";
+}
+<h1>@ViewData["Title"]</h1>
+
+<p>Use this page to detail your site's privacy policy.</p>
+
+
+
+
+@*
+@for (int i = 0; i < 5; i++)
+{
+    <blockquote>Message @i</blockquote>
+}
+*@
+
+<ul>
+    <li>ID: @Model.ID</li>
+    <li>Title: @Model.Title</li>
+    <li> Release: @Model.ReleaseDate.ToString("ddd d MMM yyyy", new System.Globalization.CultureInfo("en-US"))</li>
+</ul>
+
+@*<form>
+    <label for="ID">ID: </label>
+    <input type="text" id="id" />
+
+    <label for="Title">Title: </label>
+    <input type="text" id="title" />
+
+    <label for="ReleaseDate">Release Date: </label>
+    <input type="text" id="releasedate" />
+
+    <button type="submit">Submit</button>
+
+</form>*@
+
+<form asp-controller="Home" asp-action="Privacy" method="post">
+    <label for="ID">ID: </label>
+    <input type="text" asp-for="ID" id="id" />
+
+    <label for="Title">Title: </label>
+    <input type="text" asp-for="Title" id="title" />
+
+    <label for="ReleaseDate">Release Date: </label>
+    <input type="text" asp-for="ReleaseDate" id="releasedate" />
+
+    <button type="submit">Submit</button>
+</form>
