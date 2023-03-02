@@ -235,6 +235,9 @@ In this exercise, you will:
 
     ![](media/8c511fde6dc82610e7c1a5697c6f76eb.png)
 
+    > # Megjegyzés
+    > VS22-ben a default *ASP.NET Core Web Application* opció Razor template-et ad, nem MVC template-et. A feladat az utóbbit kéri.
+
 4.  Name the project *HelloWorld*, and change the location as per your own
     preferences. Leave the check box for **Place solution and project
     in the same directory**, unchecked. Click **Create**.
@@ -246,9 +249,9 @@ In this exercise, you will:
 
     Make sure **Authentication** is set as "No Authentication" and to uncheck **Enable Docker Support**.
 
-    ![](![](Media/Mod_02_11/2019-11-04-13-51-00.png).png)
+    > # Megjegyzés
+    > A 3-as pontál már kiválasztottuk a template-et.
  
-
 6.  Click **Create**.
     Visual Studio will take a few seconds to restore NuGet packages and setup a
     project.
@@ -316,6 +319,9 @@ In this exercise, you will:
 
     ![](media/72e04ce07ac2c731fe16e9bfe7c299dc.png)
 
+    > # Megjegyzés
+    > .NET7-ben máshogy néz ki a `Program.cs` struktúrája.
+
     **What is the difference between a host and a server?**
 
     The host is responsible for application startup and lifetime management. The
@@ -363,6 +369,9 @@ In this exercise, you will:
     ![](media/9f63a50b2995a2a84d7095f9f9fc5adb.png)
 
     Now, instead of IIS Express – we are directly using Kestrel as web server to host the app.
+
+    > # Megjegyzés
+    > VS22-ben nem lehet közvetlenül futtatni a projektet, helyette a `https` launch profile-t kell kiválasztani, így láthatjuk a web szerver terminálját.
 
 1.  Press **Ctrl + C** to shut down the server.
 
@@ -432,6 +441,26 @@ In this exercise, you will:
     }
 ```
 
+> # Megjegyzés
+> .NET7 projektekben már nincs `Startup.cs`, minden beállítás a `Program.cs`-ben van:
+> ```csharp
+> //Program.cs
+> var builder = WebApplication.CreateBuilder(args);
+> var app = builder.Build();
+> 
+> app.Run(async (context) =>
+> {
+>    await context.Response.WriteAsync("Hello World from 1st middleware");
+> });
+>
+> app.Run(async (context) =>
+> {
+>    await context.Response.WriteAsync("2nd middleware in the pipeline!");
+> });
+>
+> app.Run();
+> ```
+
 3. When you run the application, it still only shows a single Hello World statement. **Why is the 2nd middleware not executed?**
 
     It is important to realize that the request delegate as written in the first middleware, uses **app.Run()** and will terminate the pipeline, regardless of other calls to app.Run() that you may include. Therefore, only the first delegate (“Hello, World!”) will be run and displayed.
@@ -456,16 +485,19 @@ In this exercise, you will:
     }
 ```
 
-    **Note:** You configure the HTTP pipeline using the extensions **Run, Map**, and
-    **Use**. By convention, the Run method is simply a shorthand way of adding
-    middleware to the pipeline that does not call any other middleware (that is, it
-    will not call a next request delegate). Thus, Run should only be called at the
-    end of your pipeline. Run is a convention, and some middleware components may
-    expose their own Run[Middleware] methods that should only run at the end of the
-    pipeline.
+> # Megjegyzés
+> Itt is még mindig a `Program.cs`-ben vagyunk.
 
-    In the above code, the first middleware uses **Use** and the terminating
-    middleware uses **Run**.
+**Note:** You configure the HTTP pipeline using the extensions **Run, Map**, and
+**Use**. By convention, the Run method is simply a shorthand way of adding
+middleware to the pipeline that does not call any other middleware (that is, it
+will not call a next request delegate). Thus, Run should only be called at the
+end of your pipeline. Run is a convention, and some middleware components may
+expose their own Run[Middleware] methods that should only run at the end of the
+pipeline.
+
+In the above code, the first middleware uses **Use** and the terminating
+middleware uses **Run**.
 
 5.  Run the application now. It should show both text lines in the browser.
 
@@ -545,7 +577,11 @@ Now let’s look at using statics files:
     });
 ```
 
-    And add the following using statements for the above code:
+> # Megjegyzés
+> `env.WebRootPath` helyett `app.Environment.WebRootPath`
+
+And add the following using statements for the above code:
+
 ```csharp
     using Microsoft.Extensions.FileProviders;
 ```
@@ -601,18 +637,18 @@ In this exercise, you will:
 ```
 
 
-    **Note:** In addition to using an entirely separate Startup class based on the
-    current environment, you can also adjust how the application is configured
-    within a **Startup** class.
+**Note:** In addition to using an entirely separate Startup class based on the
+current environment, you can also adjust how the application is configured
+within a **Startup** class.
 
-    The **Configure()** and **ConfigureServices()** methods support
-    environment-specific versions similar to the Startup class itself, of the form
-    **Configure** and **Configure[Environment]Services()**.
+The **Configure()** and **ConfigureServices()** methods support
+environment-specific versions similar to the Startup class itself, of the form
+**Configure** and **Configure[Environment]Services()**.
 
-    If you define a method **ConfigureDevelopment()** it will be called instead of
-    **Configure()** when the **environment** is set to **development**. Likewise,
-    **ConfigureDevelopmentServices()** would be called instead of
-    **ConfigureServices()** in the same environment.
+If you define a method **ConfigureDevelopment()** it will be called instead of
+**Configure()** when the **environment** is set to **development**. Likewise,
+**ConfigureDevelopmentServices()** would be called instead of
+**ConfigureServices()** in the same environment.
 
 1.  It makes sense to give unrestricted access to static files in the **Development** and environments. And we'll want to use the Welcome page in this environment as well.
     
@@ -660,10 +696,49 @@ In this exercise, you will:
     }
 ```
 
+> # Megjegyzés
+> ```csharp
+> //Program.cs
+> var builder = WebApplication.CreateBuilder(args);
+> var app = builder.Build();
+>
+> if (app.Environment.IsDevelopment())
+> {
+>    app.UseStaticFiles();
+>    app.UseWelcomePage();
+> }
+>
+> else if (app.Environment.IsProduction())
+> {
+>    app.Use(async (context, next) =>
+>    {
+>        await context.Response.WriteAsync("Hello World from production! ");
+>        await next.Invoke();
+>    });
+>
+>    app.Run(async (context) =>
+>    {
+>        await context.Response.WriteAsync("2nd middleware in the pipeline!");
+>    });
+>}
+>
+> else
+> {
+>    app.Run(async (context) =>
+>    {
+>        await context.Response.WriteAsync("Select Development or Production environment!");
+>    });
+> }
+>
+> app.Run();
+> ```
 
 6.  Go to project properties (right-click **Middleware > Properties**). Then go to the **Debug** tab. See that the ASPNETCORE_ENVIRONMENT variable value is set to **Development**.
 
     ![](media/80883519e5676f992a7252bdfab99ab4.png)
+
+> # Megjegyzés
+> Az environment-et a **<projektnév> Debug Properties** alatt lehet módosítani. Mindegyik **Launch Profile**-nál meg lehet adni environment variable-t.
 
 7.  Run the application. Navigate to any static file URL. As you can see, you
     have unrestricted access to all static contents.
